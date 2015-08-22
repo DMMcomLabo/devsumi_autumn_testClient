@@ -1,6 +1,6 @@
 var kafka = require('kafka-node'),
 Producer = kafka.HighLevelProducer,
-client = new kafka.Client('172.16.100.180:2181,172.16.100.181:2181,172.16.100.182:2181'),
+client = new kafka.Client('172.27.100.11:2181,172.27.100.12:2181,172.27.100.13:2181'),
 producer = new Producer(client);
 var sample_json = {
     "i3_service_code": "i3_y8gx5b",
@@ -104,19 +104,26 @@ producer.on('ready',function(){
 //	console.dir(data);
 //});
 var cnt = 0;
+console.time('start_time');
   setInterval(function(){
+        sample_json.i3_service_code = getI3ServiceCode();
+        sample_json.open_id= getOpenId();
+        sample_json.session = getSession();
+        sample_json.cookie = getCookie();
 	var str = parse.bind(sample_json)();
-        var i3_service_code = getI3ServiceCode();
-        console.log(i3_service_code);
 //	console.log('log:',str);
 	producer.send([
 	{topic:"raw_tracking",messages:[str]}
 	],function(err,data){
-	console.dir(err);
-	console.dir(data);
+	  err && console.dir(err);
+//	  console.dir(data);
+	  cnt++;
+	  if((cnt%1000) === 0){
+            console.timeEnd('start_time');
+            console.log('count = ' + cnt);
+          }
 	});
-	cnt++;
-	},1000);
+	},10);
 });
 var getStringVal = function(key,valueKey,prefix){
 	var prefix = (prefix === undefined) && true;
@@ -125,14 +132,22 @@ var getStringVal = function(key,valueKey,prefix){
 };
 var crypto = require('crypto');
 var getI3ServiceCode = function(){
-	return 'i3_' + crypto.createHash('md5').update((Math.floor(Math.random()*100001)).toString(),'binary').digest('hex').substr(0,6);
+	return 'i3_' + crypto.createHash('md5').update((Math.floor(Math.random()*1001)).toString(),'binary').digest('hex').substr(0,6);
+};
+var getCookie = function(){
+	return crypto.createHash('md5').update((Math.floor(Math.random()*10000001)).toString(),'binary').digest('hex');
+};
+var getOpenId = function(){
+	return (Math.floor(Math.random()*11) <= 5) ? crypto.createHash('md5').update((Math.floor(Math.random()*1000001)).toString(),'binary').digest('hex'):"";
 };
 
+var getSession = function(){
+	return crypto.createHash('md5').update((Math.floor(Math.random()*10000001)).toString(),'binary').digest('hex');
+};
 var parse = function(){
 	var obj = this;
 	var v = getStringVal.bind(obj);
 	var str = v('log_date','date',false);
-console.log(str);
 	str += v('action');
 	str += v('option');
 	str += v('i3_service_code');

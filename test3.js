@@ -123,7 +123,7 @@ console.time('start_time');
             console.log('count = ' + cnt);
           }
 	});
-	},10);
+	},1);
 });
 var getStringVal = function(key,valueKey,prefix){
 	var prefix = (prefix === undefined) && true;
